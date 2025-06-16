@@ -18,7 +18,6 @@ type SweeperOptions struct {
 	Path       string
 	StaleDays  int
 	Merged     bool
-	NoRemote   bool
 	BaseBranch string
 }
 

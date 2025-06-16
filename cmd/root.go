@@ -47,13 +47,6 @@ func init() {
 		"Include branches already merged into the base branch.",
 	)
 
-	rootCmd.PersistentFlags().BoolP(
-		"no-remote",
-		"n",
-		false,
-		"Include branches that have no corresponding remote-tracking branch.",
-	)
-
 	rootCmd.PersistentFlags().StringP(
 		"base",
 		"b",

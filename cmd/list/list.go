@@ -8,7 +8,6 @@ type cmdOptions struct {
 	path       string
 	staleDays  int
 	merged     bool
-	noRemote   bool
 	baseBranch string
 	json       bool
 }
@@ -28,7 +27,6 @@ func getOptions(cmd *cobra.Command) cmdOptions {
 	path, _ := cmd.Flags().GetString("path")
 	days, _ := cmd.Flags().GetInt("days")
 	merged, _ := cmd.Flags().GetBool("merged")
-	noRemote, _ := cmd.Flags().GetBool("no-remote")
 	base, _ := cmd.Flags().GetString("base")
 	json, _ := cmd.Flags().GetBool("json")
 
@@ -36,7 +34,6 @@ func getOptions(cmd *cobra.Command) cmdOptions {
 		path:       path,
 		staleDays:  days,
 		merged:     merged,
-		noRemote:   noRemote,
 		baseBranch: base,
 		json:       json,
 	}
