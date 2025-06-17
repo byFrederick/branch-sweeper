@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"log"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -14,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 )
 
-// SweeperOptions defines the configuration options for the branch sweeping operation
 type SweeperOptions struct {
 	Path       string
 	StaleDays  int
@@ -45,10 +43,11 @@ func Sweeper(options SweeperOptions) map[string][]string {
 				log.Fatal(err.Error())
 			}
 
-			branches.ForEach(func(branch *plumbing.Reference) error {
-				branchName := strings.TrimPrefix(branch.Name().String(), "refs/heads/")
+			// Get a new branches iterator
+			branches, _ = repo.Branches()
 
-				if branchName == options.BaseBranch {
+			branches.ForEach(func(branch *plumbing.Reference) error {
+				if branch.Name().Short() == options.BaseBranch {
 					return nil
 				}
 
@@ -64,13 +63,13 @@ func Sweeper(options SweeperOptions) map[string][]string {
 
 				if options.Prune {
 					// Delete branch .git/config
-					err = repo.DeleteBranch(branchName)
+					err = repo.DeleteBranch(branch.Name().Short())
 
 					// Delete branch .git/refs
 					repo.Storer.RemoveReference(branch.Name())
 				}
 
-				repoBranches[repoName] = append(repoBranches[repoName], branchName)
+				repoBranches[repoName] = append(repoBranches[repoName], branch.Name().Short())
 				return nil
 			})
 		}
@@ -81,23 +80,25 @@ func Sweeper(options SweeperOptions) map[string][]string {
 	return repoBranches
 }
 
-// baseBranch retrieves base branch reference from the repo and validates it against base branch pass on options
-func baseBranch(repoName string, branches storer.ReferenceIter, userBaseBranchName string) (*plumbing.Reference, error) {
-	repoBaseBranch, _ := branches.Next()
-	repoBaseBranchName := strings.TrimPrefix(repoBaseBranch.Name().String(), "refs/heads/")
+// baseBranch iterates through the repository branches to find and validate the specified base branch.
+func baseBranch(repoName string, branches storer.ReferenceIter, optionsBaseBranch string) (*plumbing.Reference, error) {
+	var baseBranch *plumbing.Reference
 
-	// Checks if repo base branch is equal to the base branch specified by the user
-	if repoBaseBranchName == userBaseBranchName {
-		return repoBaseBranch, nil
+	branches.ForEach(func(branch *plumbing.Reference) error {
+		if branch.Name().Short() == optionsBaseBranch {
+			baseBranch = branch
+		}
+		return nil
+	})
+
+	if baseBranch != nil {
+		return baseBranch, nil
 	}
-	return nil, fmt.Errorf("%s/%s is not a valid base branch",
-		repoName,
-		userBaseBranchName,
-	)
+
+	return nil, fmt.Errorf("%s/%s is not a valid base branch", repoName, optionsBaseBranch)
 }
 
 // isStale checks if a branch's latest commit is older than the specified number of days
-// Returns true if the branch's last commit is older than staleDays
 func isStale(repo *git.Repository, hash plumbing.Hash, staleDays int) bool {
 	commits, _ := repo.Log(&git.LogOptions{From: hash})
 
