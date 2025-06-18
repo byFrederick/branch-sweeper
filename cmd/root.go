@@ -51,6 +51,6 @@ func init() {
 		"base",
 		"b",
 		"main",
-		"Base branch name to check merges against.",
+		"Repository base branch",
 	)
 }
