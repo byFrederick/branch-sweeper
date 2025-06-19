@@ -26,17 +26,20 @@ type SweeperOptions struct {
 func Sweeper(options SweeperOptions) map[string][]string {
 	repoBranches := make(map[string][]string)
 
-	filepath.WalkDir(options.Path, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(options.Path, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() && d.Name() == ".git" {
 			path := filepath.Join(path, "..")
 			repo, err := git.PlainOpen(path)
 
 			if err != nil {
-				log.Fatalf("Could not open repository %q", path)
+				log.Printf("Could not open repository %s", path)
+				return nil
 			}
 
 			repoName := filepath.Base(path)
-			branches, _ := repo.Branches()
+			branches, err := repo.Branches()
+			checkErrGetBranches(repoName, err)
+
 			baseBranch, err := baseBranch(repoName, branches, options.BaseBranch)
 
 			if err != nil {
@@ -44,38 +47,52 @@ func Sweeper(options SweeperOptions) map[string][]string {
 			}
 
 			// Get a new branches iterator
-			branches, _ = repo.Branches()
+			branches, err = repo.Branches()
+			checkErrGetBranches(repoName, err)
 
-			branches.ForEach(func(branch *plumbing.Reference) error {
+			err = branches.ForEach(func(branch *plumbing.Reference) error {
 				if branch.Name().Short() == options.BaseBranch {
 					return nil
 				}
 
-				if !isStale(repo, branch.Hash(), options.StaleDays) {
+				if !isStale(repoName, repo, branch, options.StaleDays) {
 					return nil
 				}
 
 				if options.Merged {
-					if !isMerged(repo, baseBranch.Hash(), branch.Hash()) {
+					if !isMerged(repoName, repo, baseBranch, branch) {
 						return nil
 					}
 				}
 
 				if options.Prune {
 					// Delete branch .git/config
-					err = repo.DeleteBranch(branch.Name().Short())
+					err := repo.DeleteBranch(branch.Name().Short())
+
+					if err != nil {
+						log.Fatalf("%s/%s failed to delete branch config: %v", repoName, branch.Name().Short(), err)
+					}
 
 					// Delete branch .git/refs
-					repo.Storer.RemoveReference(branch.Name())
+					err = repo.Storer.RemoveReference(branch.Name())
+
+					if err != nil {
+						log.Fatalf("%s/%s failed to delete branch refs: %v", repoName, branch.Name().Short(), err)
+					}
 				}
 
 				repoBranches[repoName] = append(repoBranches[repoName], branch.Name().Short())
 				return nil
 			})
+			checkErrGetBranches(repoName, err)
 		}
 
 		return nil
 	})
+
+	if err != nil {
+		log.Fatalf("Failed to scan repositories: %v", err)
+	}
 
 	return repoBranches
 }
@@ -84,7 +101,7 @@ func Sweeper(options SweeperOptions) map[string][]string {
 func baseBranch(repoName string, branches storer.ReferenceIter, optionsBaseBranch string) (*plumbing.Reference, error) {
 	var baseBranch *plumbing.Reference
 
-	branches.ForEach(func(branch *plumbing.Reference) error {
+	err := branches.ForEach(func(branch *plumbing.Reference) error {
 		if branch.Name().Short() == optionsBaseBranch {
 			baseBranch = branch
 		}
@@ -94,37 +111,44 @@ func baseBranch(repoName string, branches storer.ReferenceIter, optionsBaseBranc
 	if baseBranch != nil {
 		return baseBranch, nil
 	}
+	checkErrGetBranches(repoName, err)
 
-	return nil, fmt.Errorf("%s/%s is not a valid base branch", repoName, optionsBaseBranch)
+	return nil, fmt.Errorf("%s failed to get branch: %s", repoName, optionsBaseBranch)
 }
 
 // isStale checks if a branch's latest commit is older than the specified number of days
-func isStale(repo *git.Repository, hash plumbing.Hash, staleDays int) bool {
-	commits, _ := repo.Log(&git.LogOptions{From: hash})
+func isStale(repoName string, repo *git.Repository, branch *plumbing.Reference, staleDays int) bool {
+	commits, err := repo.Log(&git.LogOptions{From: branch.Hash()})
+	checkErrGetCommit(repoName, branch.Name().Short(), err)
 
 	// Get last commit
-	commit, _ := commits.Next()
+	commit, err := commits.Next()
+	checkErrGetCommit(repoName, branch.Name().Short(), err)
 
 	return time.Since(commit.Author.When) >= time.Duration(staleDays)*24*time.Hour
 }
 
 // isMerged checks if a branch latest commit exists in the base branch commit history
 // It compares the last commit of the branch against all commits in the base branch
-func isMerged(repo *git.Repository, baseBranchHash plumbing.Hash, branchHash plumbing.Hash) bool {
-	baseBranchCommits, _ := repo.Log(&git.LogOptions{From: baseBranchHash})
-	branchCommits, _ := repo.Log(&git.LogOptions{From: branchHash})
+func isMerged(repoName string, repo *git.Repository, baseBranch *plumbing.Reference, branch *plumbing.Reference) bool {
+	baseBranchCommits, err := repo.Log(&git.LogOptions{From: baseBranch.Hash()})
+	checkErrGetCommit(repoName, branch.Name().Short(), err)
 
-	branchLastCommit, _ := branchCommits.Next()
-	branchLastCommitHash := branchLastCommit.Hash
+	branchCommits, err := repo.Log(&git.LogOptions{From: branch.Hash()})
+	checkErrGetCommit(repoName, branch.Name().Short(), err)
+
+	branchLastCommit, err := branchCommits.Next()
+	checkErrGetCommit(repoName, branch.Name().Short(), err)
 
 	isMerged := false
 
-	baseBranchCommits.ForEach(func(commit *object.Commit) error {
-		if commit.Hash == branchLastCommitHash {
+	err = baseBranchCommits.ForEach(func(commit *object.Commit) error {
+		if commit.Hash == branchLastCommit.Hash {
 			isMerged = true
 		}
 		return nil
 	})
+	checkErrGetBranches(repoName, err)
 
 	return isMerged
 }
