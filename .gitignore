@@ -27,3 +27,7 @@ go.work
 # End of https://www.toptal.com/developers/gitignore/api/go
 # Added by goreleaser init:
 dist/
+
+node_modules/
+package-lock.json
+package.json
