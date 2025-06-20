@@ -1,0 +1,27 @@
+name: Lint
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Run Go formatting
+        run: if [ $(gofmt -l . | wc -l) -gt 0 ]; then exit 1; fi
+
+      - name: Run Go lint
+        uses: golangci/golangci-lint-action@v8

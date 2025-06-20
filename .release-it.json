@@ -1,0 +1,80 @@
+{
+  "$schema": "https://unpkg.com/release-it@19/schema/release-it.json",
+  "git": {
+    "requireCleanWorkingDir": false,
+    "requireBranch": "main",
+    "commitMessage": "chore: release v${version}",
+    "tagName": "v${version}",
+    "requireCommits": true,
+    "commit": true,
+    "tag": true,
+    "push": true
+  },
+  "npm": {
+    "publish": false
+  },
+  "plugins": {
+    "@release-it/bumper": {
+      "in": {
+        "file": "version",
+        "type": "text/plain"
+      },
+      "out": {
+        "file": "version",
+        "type": "text/plain"
+      }
+    },
+    "@release-it/conventional-changelog": {
+      "infile": "CHANGELOG.md",
+      "preset": {
+        "name": "conventionalcommits",
+        "types":[
+          {
+            "type": "feat",
+            "section": "Features"
+          },
+          {
+            "type": "fix",
+            "section": "Bug Fixes"
+          },
+          {
+            "type": "chore",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "docs",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "style",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "refactor",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "perf",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "test",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "build",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "revert",
+            "section": "Miscellaneous"
+          },
+          {
+            "type": "ci",
+            "section": "Miscellaneous"
+          }
+        ]
+      }
+    }
+  }
+}

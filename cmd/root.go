@@ -8,9 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var version string
+
 var rootCmd = &cobra.Command{
-	Use:   "branch-sweeper",
-	Short: "Identify and remove stale Git branches across local repositories",
+	Use:     "branch-sweeper",
+	Short:   "Identify and remove stale Git branches across local repositories",
+	Version: version,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
