@@ -22,15 +22,13 @@ Branch Sweeper CLI is a tool for identifying and removing stale Git branches acr
 
 ## Installation
 
-Install Branch Sweeper CLI from source:
+To install the tool, follow this steps:
 
 ```bash
 curl -s -L https://github.com/byFrederick/branch-sweeper/releases/download/{version}/branch-sweeper_{os}_{arch}.tar.gz | tar xz
 chmod +x branch-sweeper
 sudo mv envi /usr/local/bin
 ```
-
-This places the `branch-sweeper` binary in your `$GOBIN` directory.
 
 ## Usage
 

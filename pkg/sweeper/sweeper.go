@@ -149,6 +149,7 @@ func isMerged(repoName string, repo *git.Repository, baseBranch *plumbing.Refere
 	return isMerged
 }
 
+// deleteBranch deletes a local branch from the repository, removing both its config and reference
 func deleteBranch(repoName string, repo *git.Repository, branch *plumbing.Reference) {
 	// Delete branch .git/config
 	err := repo.DeleteBranch(branch.Name().Short())
@@ -165,6 +166,7 @@ func deleteBranch(repoName string, repo *git.Repository, branch *plumbing.Refere
 	}
 }
 
+// deleteRemoteBranch deletes a branch from the remote repository using SSH authentication via ssh-agent
 func deleteRemoteBranch(repoName string, repo *git.Repository, remoteName string, branchName string) {
 	remote, err := repo.Remote(remoteName)
 
@@ -187,6 +189,6 @@ func deleteRemoteBranch(repoName string, repo *git.Repository, remoteName string
 	err = remote.Push(pushOptions)
 
 	if err != nil {
-		log.Printf("%s failed push to %s: %v", repoName, remoteName, err)
+		log.Printf("%s failed to delete remote branch: %v", repoName, err)
 	}
 }
