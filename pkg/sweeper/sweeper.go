@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 )
 
 type SweeperOptions struct {
@@ -19,6 +21,8 @@ type SweeperOptions struct {
 	Merged     bool
 	BaseBranch string
 	Prune      bool
+	Remote     bool
+	RemoteName string
 }
 
 // Sweeper scans repositories in the given path and identifies branches that match the specified criteria
@@ -66,18 +70,10 @@ func Sweeper(options SweeperOptions) map[string][]string {
 				}
 
 				if options.Prune {
-					// Delete branch .git/config
-					err := repo.DeleteBranch(branch.Name().Short())
+					deleteBranch(repoName, repo, branch)
 
-					if err != nil {
-						log.Fatalf("%s/%s failed to delete branch config: %v", repoName, branch.Name().Short(), err)
-					}
-
-					// Delete branch .git/refs
-					err = repo.Storer.RemoveReference(branch.Name())
-
-					if err != nil {
-						log.Fatalf("%s/%s failed to delete branch refs: %v", repoName, branch.Name().Short(), err)
+					if options.Remote {
+						deleteRemoteBranch(repoName, repo, options.RemoteName, branch.Name().Short())
 					}
 				}
 
@@ -151,4 +147,46 @@ func isMerged(repoName string, repo *git.Repository, baseBranch *plumbing.Refere
 	checkErrGetBranches(repoName, err)
 
 	return isMerged
+}
+
+func deleteBranch(repoName string, repo *git.Repository, branch *plumbing.Reference) {
+	// Delete branch .git/config
+	err := repo.DeleteBranch(branch.Name().Short())
+
+	if err != nil {
+		log.Printf("%s failed to delete branch config %s: %v", repoName, branch, err)
+	}
+
+	// Delete branch .git/refs
+	err = repo.Storer.RemoveReference(branch.Name())
+
+	if err != nil {
+		log.Fatalf("%s failed to delete branch %s: %v", repoName, branch, err)
+	}
+}
+
+func deleteRemoteBranch(repoName string, repo *git.Repository, remoteName string, branchName string) {
+	remote, err := repo.Remote(remoteName)
+
+	if err != nil {
+		log.Fatalf("%s failed to get remote %s: %v", repoName, remoteName, err)
+	}
+
+	auth, err := ssh.NewSSHAgentAuth("git")
+
+	if err != nil {
+		log.Fatalf("%s failed to get public key from ssh-agent: %v", repoName, err)
+	}
+
+	pushOptions := &git.PushOptions{
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(":refs/heads/" + branchName),
+		},
+		Auth: auth,
+	}
+	err = remote.Push(pushOptions)
+
+	if err != nil {
+		log.Printf("%s failed push to %s: %v", repoName, remoteName, err)
+	}
 }

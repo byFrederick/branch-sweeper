@@ -35,8 +35,6 @@ jobs:
       - name: Run release-it
         run: |
           npx release-it --ci
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
       - name: Setup Go
         uses: actions/setup-go@v5

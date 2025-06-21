@@ -9,6 +9,8 @@ type cmdOptions struct {
 	staleDays  int
 	merged     bool
 	baseBranch string
+	remote     bool
+	remoteName string
 }
 
 var Cmd = &cobra.Command{
@@ -26,15 +28,30 @@ func getOptions(cmd *cobra.Command) cmdOptions {
 	days, _ := cmd.Flags().GetInt("days")
 	merged, _ := cmd.Flags().GetBool("merged")
 	base, _ := cmd.Flags().GetString("base")
+	remote, _ := cmd.Flags().GetBool("remote")
+	remoteName, _ := cmd.Flags().GetString("remote-name")
 
 	return cmdOptions{
 		path:       path,
 		staleDays:  days,
 		merged:     merged,
 		baseBranch: base,
+		remote:     remote,
+		remoteName: remoteName,
 	}
 }
 
 func init() {
+	Cmd.Flags().BoolP(
+		"remote",
+		"r",
+		false,
+		"Delete matching branch on the remote repository (requires your SSH public key loaded in ssh-agent for auth)",
+	)
 
+	Cmd.Flags().String(
+		"remote-name",
+		"origin",
+		"Name of Git remote",
+	)
 }

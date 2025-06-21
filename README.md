@@ -2,14 +2,14 @@
 
 ## Contents
 
-- [Description](#-description)
+- [Description](#description)
   - [Features](#features)
-- [Installation](#-installation)
-- [Usage](#-usage)
+- [Installation](#installation)
+- [Usage](#usage)
   - [Commands](#commands)
   - [Examples](#examples)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Description
 

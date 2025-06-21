@@ -10,6 +10,6 @@ func checkErrGetBranches(repo string, err error) {
 
 func checkErrGetCommit(repo string, branch string, err error) {
 	if err != nil {
-		log.Fatalf("%s/%s failed to get branch commits: %v", repo, branch, err)
+		log.Fatalf("%s failed to get branch %s commits: %v", repo, branch, err)
 	}
 }
