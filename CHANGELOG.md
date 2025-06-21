@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0](https://github.com/byFrederick/branch-sweeper/compare/v0.1.0...v0.2.0) (2025-06-21)
+
+### Features
+
+* Add delete remote branch option to prune subcommand ([682d24f](https://github.com/byFrederick/branch-sweeper/commit/682d24f5bd8c8d1e361b81d8aa37d66bce8bd2fd))
+
+### Miscellaneous
+
+* Add tool information on README ([a355047](https://github.com/byFrederick/branch-sweeper/commit/a3550475eb6d1244949c37580332e773ee54d163))
+
 ## 0.1.0 (2025-06-20)
 
 ### Features
