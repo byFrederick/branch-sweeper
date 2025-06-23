@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -27,17 +28,27 @@ type SweeperOptions struct {
 
 // Sweeper scans repositories in the given path and identifies branches that match the specified criteria
 // It can optionally delete (prune) identified branches
-func Sweeper(options SweeperOptions) map[string][]string {
-	repoBranches := make(map[string][]string)
+func Sweeper(options SweeperOptions) [][]string {
+	repoBranches := [][]string{}
 
 	err := filepath.WalkDir(options.Path, func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() && d.Name() == ".git" {
-			path := filepath.Join(path, "..")
+		if err != nil {
+			return err
+		}
+
+		if d.Name() == ".git" {
+			return fs.SkipDir
+		}
+
+		_, err = os.Stat(filepath.Join(path, ".git"))
+
+		if err == nil {
+			path := filepath.Join(path)
 			repo, err := git.PlainOpen(path)
 
 			if err != nil {
 				log.Printf("Could not open repository %s", path)
-				return nil
+				return fs.SkipDir
 			}
 
 			repoName := filepath.Base(path)
@@ -77,17 +88,20 @@ func Sweeper(options SweeperOptions) map[string][]string {
 					}
 				}
 
-				repoBranches[repoName] = append(repoBranches[repoName], branch.Name().Short())
+				repoBranches = append(repoBranches, []string{repoName, branch.Name().Short()})
+
 				return nil
 			})
 			checkErrGetBranches(repoName, err)
+
+			return fs.SkipDir
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		log.Fatalf("Failed to scan repositories: %v", err)
+		log.Fatalf("Failed to scan repositories on path: %v", err)
 	}
 
 	return repoBranches

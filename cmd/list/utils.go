@@ -17,12 +17,13 @@ func listBranches(options cmdOptions) {
 	)
 
 	if !options.json {
-		fmt.Printf("%-40s %-15s\n", "Repository", "Branch")
+		fmt.Printf("%-40s %-40s\n", "Repository", "Branch")
 
-		for repo, branches := range repoBranches {
-			for _, branch := range branches {
-				fmt.Printf("%-40s %-15s\n", repo, branch)
+		for _, entries := range repoBranches {
+			for _, entry := range entries {
+				fmt.Printf("%-41s", entry)
 			}
+			fmt.Print("\n")
 		}
 	} else {
 		fmt.Println("json list")

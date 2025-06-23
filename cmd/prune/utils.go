@@ -19,10 +19,8 @@ func pruneBranches(options cmdOptions) {
 		},
 	)
 
-	for repo, branches := range prunedBranches {
-		for _, branch := range branches {
-			fmt.Printf("%s/%s deleted\n", repo, branch)
-		}
+	for _, entries := range prunedBranches {
+		fmt.Printf("%s/%s deleted\n", entries[0], entries[1])
 	}
 
 }
