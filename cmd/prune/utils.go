@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/byFrederick/branch-sweeper/pkg/sweeper"
+	"github.com/charmbracelet/log"
 )
 
 func pruneBranches(options cmdOptions) {
-	prunedBranches := sweeper.Sweeper(
+	prunedBranches, err := sweeper.Sweeper(
 		sweeper.SweeperOptions{
 			Path:       options.path,
 			StaleDays:  options.staleDays,
@@ -19,8 +20,15 @@ func pruneBranches(options cmdOptions) {
 		},
 	)
 
-	for _, entries := range prunedBranches {
-		fmt.Printf("%s/%s deleted\n", entries[0], entries[1])
+	if err != nil {
+		log.Fatal(err)
 	}
 
+	if len(prunedBranches) > 0 {
+		for _, entries := range prunedBranches {
+			fmt.Printf("%s/%s deleted\n", entries[0], entries[1])
+		}
+	} else {
+		log.Error("No branches found, nothing to delete")
+	}
 }

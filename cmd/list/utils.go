@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/byFrederick/branch-sweeper/pkg/sweeper"
+	"github.com/charmbracelet/log"
 )
 
 func listBranches(options cmdOptions) {
-	repoBranches := sweeper.Sweeper(
+	repoBranches, err := sweeper.Sweeper(
 		sweeper.SweeperOptions{
 			Path:       options.path,
 			StaleDays:  options.staleDays,
@@ -16,7 +17,11 @@ func listBranches(options cmdOptions) {
 		},
 	)
 
-	if !options.json {
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(repoBranches) > 0 {
 		fmt.Printf("%-40s %-40s\n", "Repository", "Branch")
 
 		for _, entries := range repoBranches {
@@ -26,6 +31,6 @@ func listBranches(options cmdOptions) {
 			fmt.Print("\n")
 		}
 	} else {
-		fmt.Println("json list")
+		fmt.Println("No branches found")
 	}
 }

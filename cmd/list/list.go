@@ -9,7 +9,6 @@ type cmdOptions struct {
 	staleDays  int
 	merged     bool
 	baseBranch string
-	json       bool
 }
 
 var Cmd = &cobra.Command{
@@ -28,21 +27,15 @@ func getOptions(cmd *cobra.Command) cmdOptions {
 	days, _ := cmd.Flags().GetInt("days")
 	merged, _ := cmd.Flags().GetBool("merged")
 	base, _ := cmd.Flags().GetString("base")
-	json, _ := cmd.Flags().GetBool("json")
 
 	return cmdOptions{
 		path:       path,
 		staleDays:  days,
 		merged:     merged,
 		baseBranch: base,
-		json:       json,
 	}
 }
 
 func init() {
-	Cmd.Flags().Bool(
-		"json",
-		false,
-		"Output the list as a JSON",
-	)
+
 }
