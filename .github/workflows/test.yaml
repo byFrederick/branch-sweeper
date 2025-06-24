@@ -1,4 +1,4 @@
-name: Lint
+name: Test
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
   
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,8 +21,5 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Run Go formatting
-        run: if [ $(gofmt -l . | wc -l) -gt 0 ]; then exit 1; fi
-
-      - name: Run Go lint
-        uses: golangci/golangci-lint-action@v8
+      - name: Run Go tests
+        run: go test ./... -v
