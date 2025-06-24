@@ -27,7 +27,7 @@ To install the tool, follow this steps:
 ```bash
 curl -s -L https://github.com/byFrederick/branch-sweeper/releases/download/{version}/branch-sweeper_{os}_{arch}.tar.gz | tar xz
 chmod +x branch-sweeper
-sudo mv envi /usr/local/bin
+sudo mv branch-sweeper /usr/local/bin
 ```
 
 ## Usage
