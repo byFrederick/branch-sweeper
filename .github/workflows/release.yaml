@@ -26,15 +26,13 @@ jobs:
         with:
           node-version-file: '.tool-versions'
 
-      - name: Install dependencies
-        run: |
-          npm install release-it
-          npm install @release-it/bumper
-          npm install @release-it/conventional-changelog
-
       - name: Run release-it
         run: |
-          npx release-it --ci
+          npx -y \
+          -p release-it@19.0.3 \
+          -p @release-it/bumper@7.0.5 \
+          -p @release-it/conventional-changelog@10.0.1 \
+          release-it --ci
 
       - name: Setup Go
         uses: actions/setup-go@v5
