@@ -1,13 +1,13 @@
 package sweeper
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -29,11 +29,17 @@ type SweeperOptions struct {
 // Sweeper scans repositories in the given path and identifies branches that match the specified criteria
 // It can optionally delete (prune) identified branches
 func Sweeper(options SweeperOptions) ([][]string, error) {
-	repoBranches := [][]string{}
+	if options.StaleDays < 0 {
+		return nil, fmt.Errorf("stale days can't be negative")
+	}
 
-	err := filepath.WalkDir(options.Path, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+	repoBranches := [][]string{}
+	errs := []error{}
+
+	err := filepath.WalkDir(options.Path, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			errs = append(errs, walkErr)
+			return nil
 		}
 
 		if !d.IsDir() {
@@ -44,15 +50,13 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 			return fs.SkipDir
 		}
 
-		_, err = os.Stat(filepath.Join(path, ".git"))
-
-		if err == nil {
+		if _, err := os.Stat(filepath.Join(path, ".git")); err == nil {
 			path := filepath.Join(path)
 
 			repo, err := git.PlainOpen(path)
 
 			if err != nil {
-				log.Errorf("Could not open repository %s", path)
+				errs = append(errs, fmt.Errorf("could not open repository on path %s: %w", path, err))
 				return fs.SkipDir
 			}
 
@@ -60,20 +64,23 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 			branches, err := repo.Branches()
 
 			if err != nil {
-				return fmt.Errorf("%s failed to get list of branches: %v", repo, err)
+				errs = append(errs, fmt.Errorf("%s failed to get list of branches: %w", repoName, err))
+				return fs.SkipDir
 			}
 
-			baseBranch, err := baseBranch(repoName, branches, options.BaseBranch)
+			baseBranch, err := findBaseBranch(repoName, branches, options.BaseBranch)
 
 			if err != nil {
-				log.Fatal(err.Error())
+				errs = append(errs, err)
+				return fs.SkipDir
 			}
 
 			// Get a new branches iterator
 			branches, err = repo.Branches()
 
 			if err != nil {
-				return fmt.Errorf("%s failed to get list of branches: %v", repo, err)
+				errs = append(errs, fmt.Errorf("%s failed to get list of branches: %w", repoName, err))
+				return fs.SkipDir
 			}
 
 			err = branches.ForEach(func(branch *plumbing.Reference) error {
@@ -84,7 +91,8 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 				staled, err := isStale(repoName, repo, branch, options.StaleDays)
 
 				if err != nil {
-					return err
+					errs = append(errs, err)
+					return nil
 				}
 
 				if !staled {
@@ -95,7 +103,8 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 					merged, err := isMerged(repoName, repo, baseBranch, branch)
 
 					if err != nil {
-						return err
+						errs = append(errs, err)
+						return nil
 					}
 
 					if !merged {
@@ -104,14 +113,16 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 				}
 
 				if options.Prune {
-					err := deleteBranch(repoName, repo, branch)
-
-					if err != nil {
-						return err
+					if err := deleteBranch(repoName, repo, branch); err != nil {
+						errs = append(errs, err)
+						return nil
 					}
 
 					if options.Remote {
-						deleteRemoteBranch(repoName, repo, options.RemoteName, branch.Name().Short())
+						if err := deleteRemoteBranch(repoName, repo, options.RemoteName, branch.Name().Short()); err != nil {
+							errs = append(errs, err)
+							return nil
+						}
 					}
 				}
 
@@ -121,7 +132,7 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 			})
 
 			if err != nil {
-				return err
+				errs = append(errs, fmt.Errorf("%s failed to get list of branches: %w", repoName, err))
 			}
 
 			return fs.SkipDir
@@ -131,14 +142,14 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to scan repositories on path: %v", err)
+		return nil, fmt.Errorf("failed to scan repositories on path: %w", err)
 	}
 
-	return repoBranches, nil
+	return repoBranches, errors.Join(errs...)
 }
 
 // baseBranch iterates through the repository branches to find and validate the specified base branch.
-func baseBranch(repoName string, branches storer.ReferenceIter, optionsBaseBranch string) (*plumbing.Reference, error) {
+func findBaseBranch(repoName string, branches storer.ReferenceIter, optionsBaseBranch string) (*plumbing.Reference, error) {
 	var baseBranch *plumbing.Reference
 
 	err := branches.ForEach(func(branch *plumbing.Reference) error {
@@ -165,14 +176,14 @@ func isStale(repoName string, repo *git.Repository, branch *plumbing.Reference, 
 	commits, err := repo.Log(&git.LogOptions{From: branch.Hash()})
 
 	if err != nil {
-		return false, fmt.Errorf("%s error getting branch commits log: %v", repoName, err)
+		return false, fmt.Errorf("%s error getting branch commits log: %w", repoName, err)
 	}
 
 	// Get last commit
 	commit, err := commits.Next()
 
 	if err != nil {
-		return false, fmt.Errorf("%s error getting branch last commit: %v", repoName, err)
+		return false, fmt.Errorf("%s error getting branch last commit: %w", repoName, err)
 	}
 
 	return time.Since(commit.Author.When) >= time.Duration(staleDays)*24*time.Hour, nil
@@ -184,25 +195,25 @@ func isMerged(repoName string, repo *git.Repository, baseBranch *plumbing.Refere
 	baseBranchCommits, err := repo.Log(&git.LogOptions{From: baseBranch.Hash()})
 
 	if err != nil {
-		return false, fmt.Errorf("%s error getting base branch commits log: %v", repoName, err)
+		return false, fmt.Errorf("%s error getting base branch commits log: %w", repoName, err)
 	}
 
 	branchCommits, err := repo.Log(&git.LogOptions{From: branch.Hash()})
 	if err != nil {
-		return false, fmt.Errorf("%s error getting branch commits log: %v", repoName, err)
+		return false, fmt.Errorf("%s error getting branch commits log: %w", repoName, err)
 	}
 
 	branchLastCommit, err := branchCommits.Next()
 
 	if err != nil {
-		return false, fmt.Errorf("%s error getting branch last commit: %v", repoName, err)
+		return false, fmt.Errorf("%s error getting branch last commit: %w", repoName, err)
 	}
 
-	isMerged := false
+	var merged bool
 
 	err = baseBranchCommits.ForEach(func(commit *object.Commit) error {
 		if commit.Hash == branchLastCommit.Hash {
-			isMerged = true
+			merged = true
 			return storer.ErrStop
 		}
 		return nil
@@ -212,36 +223,36 @@ func isMerged(repoName string, repo *git.Repository, baseBranch *plumbing.Refere
 		return false, fmt.Errorf("%s base branch commits lookup failed: %w", repoName, err)
 	}
 
-	return isMerged, nil
+	return merged, nil
 }
 
 // deleteBranch deletes a local branch from the repository, removing both its config and reference
 func deleteBranch(repoName string, repo *git.Repository, branch *plumbing.Reference) error {
-	// Delete branch .git/config
-	_ = repo.DeleteBranch(branch.Name().Short())
+	// Delete branch .git/config, if it doesn't found the branch config it ignores the error and continues
+	if err := repo.DeleteBranch(branch.Name().Short()); err != nil && err != git.ErrBranchNotFound {
+		return fmt.Errorf("%s failed to delete branch config %s: %w", repoName, branch.Name().Short(), err)
+	}
 
 	// Delete branch .git/refs
-	err := repo.Storer.RemoveReference(branch.Name())
-
-	if err != nil {
-		return fmt.Errorf("%s failed to delete branch %s: %v", repoName, branch, err)
+	if err := repo.Storer.RemoveReference(branch.Name()); err != nil {
+		return fmt.Errorf("%s failed to delete branch %s: %w", repoName, branch.Name().Short(), err)
 	}
 
 	return nil
 }
 
 // deleteRemoteBranch deletes a branch from the remote repository using SSH authentication via ssh-agent
-func deleteRemoteBranch(repoName string, repo *git.Repository, remoteName string, branchName string) {
+func deleteRemoteBranch(repoName string, repo *git.Repository, remoteName string, branchName string) error {
 	remote, err := repo.Remote(remoteName)
 
 	if err != nil {
-		log.Fatalf("%s failed to get remote %s: %v", repoName, remoteName, err)
+		return fmt.Errorf("%s failed to get remote %s: %w", repoName, remoteName, err)
 	}
 
 	auth, err := ssh.NewSSHAgentAuth("git")
 
 	if err != nil {
-		log.Fatalf("%s failed to get public key from ssh-agent: %v", repoName, err)
+		return fmt.Errorf("%s failed to get public key from ssh-agent: %w", repoName, err)
 	}
 
 	pushOptions := &git.PushOptions{
@@ -251,9 +262,9 @@ func deleteRemoteBranch(repoName string, repo *git.Repository, remoteName string
 		Auth: auth,
 	}
 
-	err = remote.Push(pushOptions)
-
-	if err != nil {
-		log.Printf("%s failed to delete remote branch: %v", repoName, err)
+	if err = remote.Push(pushOptions); err != nil && err != git.NoErrAlreadyUpToDate {
+		return fmt.Errorf("%s failed to delete remote branch: %w", repoName, err)
 	}
+
+	return nil
 }

@@ -20,15 +20,15 @@ func pruneBranches(options cmdOptions) {
 		},
 	)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	if len(prunedBranches) > 0 {
 		for _, entries := range prunedBranches {
 			fmt.Printf("%s/%s deleted\n", entries[0], entries[1])
 		}
 	} else {
 		log.Error("No branches found, nothing to delete")
+	}
+
+	if err != nil {
+		log.Warn(err)
 	}
 }

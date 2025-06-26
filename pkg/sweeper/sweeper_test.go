@@ -72,7 +72,7 @@ func TestBaseBranchWithValidBranch(t *testing.T) {
 
 	branches, _ := repo.Branches()
 
-	baseBranch, err := baseBranch(repoName, branches, defaultBaseBranch)
+	baseBranch, err := findBaseBranch(repoName, branches, defaultBaseBranch)
 
 	if err != nil {
 		t.Errorf("baseBranch returned error: %v", err)
@@ -89,7 +89,7 @@ func TestBaseBranchWithInvalidBranch(t *testing.T) {
 
 	branches, _ := repo.Branches()
 
-	_, err := baseBranch(repoName, branches, "test")
+	_, err := findBaseBranch(repoName, branches, "test")
 
 	if err == nil {
 		t.Errorf("Expected empty result")

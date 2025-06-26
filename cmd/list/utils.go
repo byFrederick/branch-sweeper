@@ -17,10 +17,6 @@ func listBranches(options cmdOptions) {
 		},
 	)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	if len(repoBranches) > 0 {
 		fmt.Printf("%-40s %-40s\n", "Repository", "Branch")
 
@@ -32,5 +28,9 @@ func listBranches(options cmdOptions) {
 		}
 	} else {
 		fmt.Println("No branches found")
+	}
+
+	if err != nil {
+		log.Warn(err)
 	}
 }
