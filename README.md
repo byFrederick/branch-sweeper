@@ -38,14 +38,15 @@ After installation, the `branch-sweeper` command is available to manage stale br
 
 - `list`: Display stale branches without deleting them.
 - `prune`: Delete stale branches.
-- `help`: Show help information for any command.
 
 Global flags apply to both commands:
 
-- `--path, -p`: Directory to scan for Git repositories (default `.`).
+- `--base, -b`: Repository base branch (default `main`).
 - `--days, -d`: Minimum days since last commit to mark a branch stale (default `30`).
-- `--merged, -m`: Include branches merged into the base branch.
-- `--base, -b`: Base branch name (default `main`).
+- `--exclude, -e`: Glob pattern for branches to exclude (use braces for multiple patterns, e.g. '{feat*,fix*}').
+- `--include, -i`: Glob pattern for branches to include (use braces for multiple patterns, e.g. '{feat*,fix*}').
+- `--merged, -m`: Include branches already merged into the base branch.
+- `--path, -p`: Directory to scan for Git repos (default `.`).
 
 ### Examples
 

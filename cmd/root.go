@@ -33,21 +33,21 @@ func init() {
 		"path",
 		"p",
 		".",
-		"Directory to scan for Git repos.",
+		"Directory to scan for Git repos",
 	)
 
 	rootCmd.PersistentFlags().IntP(
 		"days",
 		"d",
 		30,
-		"Minimum days since last commit to mark a branch stale.",
+		"Minimum days since last commit to mark a branch stale",
 	)
 
 	rootCmd.PersistentFlags().BoolP(
 		"merged",
 		"m",
 		false,
-		"Include branches already merged into the base branch.",
+		"Include branches already merged into the base branch",
 	)
 
 	rootCmd.PersistentFlags().StringP(
@@ -61,13 +61,13 @@ func init() {
 		"include",
 		"i",
 		"",
-		"Glob pattern for branches to include (use braces for multiple patterns, e.g. '{feat*,fix*}').",
+		"Glob pattern for branches to include (use braces for multiple patterns, e.g. '{feat*,fix*}')",
 	)
 
 	rootCmd.PersistentFlags().StringP(
 		"exclude",
 		"e",
 		"",
-		"Glob pattern for branches to exclude (use braces for multiple patterns, e.g. '{feat*,fix*}').",
+		"Glob pattern for branches to exclude (use braces for multiple patterns, e.g. '{feat*,fix*}')",
 	)
 }
