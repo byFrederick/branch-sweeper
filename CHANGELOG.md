@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/byFrederick/branch-sweeper/compare/v0.2.0...v0.3.0) (2025-06-26)
+
+### Features
+
+* add include and exclude flags for branch filtering ([ecdc46f](https://github.com/byFrederick/branch-sweeper/commit/ecdc46f8df981c30a43ec7f436b79c86ac989811))
+
+### Miscellaneous
+
+* Add test workflow and update lint workflow ([bf97c3a](https://github.com/byFrederick/branch-sweeper/commit/bf97c3af795006907b0b23a5ff23c60b32957d54))
+* Change sweeper output and update consumers ([f5de29f](https://github.com/byFrederick/branch-sweeper/commit/f5de29ffbd3efbfd30090306ab21703120aac5c0))
+* Improve error handling and add tests ([633c970](https://github.com/byFrederick/branch-sweeper/commit/633c970e1321fa8e5ecc88c85de5e8bdaa0dab88))
+* rename workflow from build to release ([ff1dfe8](https://github.com/byFrederick/branch-sweeper/commit/ff1dfe816b9f58aa3194384b96ed52dd12aa3932))
+* Return errors instead of exiting ([64dd4e0](https://github.com/byFrederick/branch-sweeper/commit/64dd4e0b0db94c8c84bd5d70be260de7309d13f5))
+* Update installation instructions ([64d3dc5](https://github.com/byFrederick/branch-sweeper/commit/64d3dc5238332f22c5a52600fbd14e52c9105642))
+* Update installation instructions and add function comments ([789e3cc](https://github.com/byFrederick/branch-sweeper/commit/789e3cc044afac476574267dd20730748be6b4aa))
+* Update README global flags section ([0a5c477](https://github.com/byFrederick/branch-sweeper/commit/0a5c4773dbd9b2a8f94c757b9716ed2fb793c155))
+* use npx with pinned versions in release workflow ([b27e1ab](https://github.com/byFrederick/branch-sweeper/commit/b27e1ab6b4954d979904d991cb6405f6488da616))
+
 ## [0.2.0](https://github.com/byFrederick/branch-sweeper/compare/v0.1.0...v0.2.0) (2025-06-21)
 
 ### Features
