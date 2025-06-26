@@ -15,6 +15,8 @@ func pruneBranches(options cmdOptions) {
 			Merged:     options.merged,
 			BaseBranch: options.baseBranch,
 			Prune:      true,
+			Include:    options.include,
+			Exclude:    options.exclude,
 			Remote:     options.remote,
 			RemoteName: options.remoteName,
 		},

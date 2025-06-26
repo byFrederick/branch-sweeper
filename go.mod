@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/charmbracelet/log v0.4.2
 	github.com/go-git/go-git/v5 v5.16.2
+	github.com/gobwas/glob v0.2.3
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/spf13/cobra v1.9.1
 )

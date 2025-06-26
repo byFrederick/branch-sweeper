@@ -14,6 +14,8 @@ func listBranches(options cmdOptions) {
 			StaleDays:  options.staleDays,
 			Merged:     options.merged,
 			BaseBranch: options.baseBranch,
+			Include:    options.include,
+			Exclude:    options.exclude,
 		},
 	)
 

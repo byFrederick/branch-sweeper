@@ -56,4 +56,18 @@ func init() {
 		"main",
 		"Repository base branch",
 	)
+
+	rootCmd.PersistentFlags().StringP(
+		"include",
+		"i",
+		"",
+		"Glob pattern for branches to include (use braces for multiple patterns, e.g. '{feat*,fix*}').",
+	)
+
+	rootCmd.PersistentFlags().StringP(
+		"exclude",
+		"e",
+		"",
+		"Glob pattern for branches to exclude (use braces for multiple patterns, e.g. '{feat*,fix*}').",
+	)
 }

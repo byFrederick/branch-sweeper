@@ -66,6 +66,60 @@ func TestSweeperWithValidRepo(t *testing.T) {
 	}
 }
 
+func TestSweeperIncludeOption(t *testing.T) {
+	repo, path, hash := createTestRepo(t)
+	branchToInclude := randomName()
+	branchToExclude := randomName()
+	_ = createTestBranch(t, repo, branchToInclude, hash, time.Now().AddDate(0, 0, -30))
+	_ = createTestBranch(t, repo, branchToExclude, hash, time.Now().AddDate(0, 0, -30))
+
+	options := SweeperOptions{
+		Path:       path,
+		StaleDays:  30,
+		BaseBranch: "main",
+		Include:    branchToInclude,
+	}
+
+	repoBranches, err := Sweeper(options)
+
+	if err != nil {
+		t.Errorf("Sweeper returned error: %v", err)
+	}
+
+	for _, branches := range repoBranches {
+		if slices.Contains(branches, branchToExclude) {
+			t.Errorf("Expected only branch %s", branchToInclude)
+		}
+	}
+}
+
+func TestSweeperExcludeOption(t *testing.T) {
+	repo, path, hash := createTestRepo(t)
+	branchToInclude := randomName()
+	branchToExclude := randomName()
+	_ = createTestBranch(t, repo, branchToInclude, hash, time.Now().AddDate(0, 0, -30))
+	_ = createTestBranch(t, repo, branchToExclude, hash, time.Now().AddDate(0, 0, -30))
+
+	options := SweeperOptions{
+		Path:       path,
+		StaleDays:  30,
+		BaseBranch: "main",
+		Exclude:    branchToExclude,
+	}
+
+	repoBranches, err := Sweeper(options)
+
+	if err != nil {
+		t.Errorf("Sweeper returned error: %v", err)
+	}
+
+	for _, branches := range repoBranches {
+		if slices.Contains(branches, branchToExclude) {
+			t.Errorf("Expected only branch %s", branchToInclude)
+		}
+	}
+}
+
 func TestBaseBranchWithValidBranch(t *testing.T) {
 	repo, path, _ := createTestRepo(t)
 	repoName := filepath.Base(path)

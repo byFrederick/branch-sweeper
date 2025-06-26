@@ -14,6 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"github.com/gobwas/glob"
 )
 
 type SweeperOptions struct {
@@ -24,6 +25,8 @@ type SweeperOptions struct {
 	Prune      bool
 	Remote     bool
 	RemoteName string
+	Include    string
+	Exclude    string
 }
 
 // Sweeper scans repositories in the given path and identifies branches that match the specified criteria
@@ -85,6 +88,14 @@ func Sweeper(options SweeperOptions) ([][]string, error) {
 
 			err = branches.ForEach(func(branch *plumbing.Reference) error {
 				if branch.Name().Short() == options.BaseBranch {
+					return nil
+				}
+
+				if g := glob.MustCompile(options.Exclude); options.Exclude != "" && g.Match(branch.Name().Short()) {
+					return nil
+				}
+
+				if g := glob.MustCompile(options.Include); options.Include != "" && !g.Match(branch.Name().Short()) {
 					return nil
 				}
 

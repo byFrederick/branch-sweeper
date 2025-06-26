@@ -9,6 +9,8 @@ type cmdOptions struct {
 	staleDays  int
 	merged     bool
 	baseBranch string
+	include    string
+	exclude    string
 	remote     bool
 	remoteName string
 }
@@ -28,6 +30,8 @@ func getOptions(cmd *cobra.Command) cmdOptions {
 	days, _ := cmd.Flags().GetInt("days")
 	merged, _ := cmd.Flags().GetBool("merged")
 	base, _ := cmd.Flags().GetString("base")
+	include, _ := cmd.Flags().GetString("include")
+	exclude, _ := cmd.Flags().GetString("exclude")
 	remote, _ := cmd.Flags().GetBool("remote")
 	remoteName, _ := cmd.Flags().GetString("remote-name")
 
@@ -36,6 +40,8 @@ func getOptions(cmd *cobra.Command) cmdOptions {
 		staleDays:  days,
 		merged:     merged,
 		baseBranch: base,
+		include:    include,
+		exclude:    exclude,
 		remote:     remote,
 		remoteName: remoteName,
 	}
